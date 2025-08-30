@@ -22,7 +22,7 @@ def yield_lognames(pattern: str, top: str) -> Generator[str, None, None]:
 
     for dirpath, dirnames, filenames in os.walk(top):
         for fn in fnmatch.filter(filenames, pattern):
-            yield fn
+            yield os.path.join(dirpath, fn)
 
 
 def yield_logopen(
@@ -66,4 +66,5 @@ if __name__ == "__main__":
     lognames = yield_lognames("access-log*.*", "www")
     openfiles = yield_logopen(lognames)
     lines = yield_lines(openfiles)
-    filter_lines("(?i)python", lines)
+    for line in filter_lines("(?i)python", lines):
+        print(line)
