@@ -48,7 +48,9 @@ def yield_lines(
     """Lines from all chained log files"""
 
     for gen in logopens:
-        yield from gen
+        # yield from gen
+        for line in gen:
+            yield line.decode("utf-8")
 
 
 def filter_lines(
