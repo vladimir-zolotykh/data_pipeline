@@ -6,6 +6,7 @@
 ['access-log-0108.bz2', 'access-log-0108.gz']
 >>>
 """
+from typing import TextIO, cast
 import io
 import os
 import re
@@ -27,23 +28,23 @@ def yield_lognames(pattern: str, top: str) -> Generator[str, None, None]:
 
 def yield_logopen(
     lognames: Generator[str, None, None],
-) -> Generator[io.BufferedIOBase, None, None]:
+) -> Generator[TextIO, None, None]:
     """Open log files"""
 
-    fo: gzip.GzipFile | bz2.BZ2File
+    fo: TextIO
     for log in lognames:
         if log.endswith(".gz"):
-            fo = gzip.open(log)
+            fo = cast(TextIO, gzip.open(log, "rt"))
         elif log.endswith(".bz2"):
-            fo = bz2.open(log)
+            fo = cast(TextIO, bz2.open(log, "rt"))
         else:
-            fo = open(log)
+            fo = open(log, "rt")
         yield fo
         fo.close()
 
 
 def yield_lines(
-    logopens: Generator[io.BufferedIOBase, None, None],
+    logopens: Generator[TextIO, None, None],
 ) -> Generator[str, None, None]:
     """Lines from all chained log files"""
 
