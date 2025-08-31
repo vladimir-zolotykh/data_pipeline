@@ -87,9 +87,7 @@ class TestDataPipeline(unittest.TestCase):
         lognames = yield_lognames("access-log", "www")
         openfiles = yield_logopen(lognames)
         lines = yield_lines(openfiles)
-        got = ""
-        for line in filter_lines("UninstantiatedTemplates", lines):
-            got += line
+        got = "".join(filter_lines("UninstantiatedTemplates", lines))
         self.assertEqual(got, expected)
 
     def test_bytes_transferred(self):
@@ -98,11 +96,7 @@ class TestDataPipeline(unittest.TestCase):
         lines = yield_lines(openfiles)
         total: int = 0
         lines = filter_lines("(?i)python", lines)
-        for cnt_column in filter_bytes_transfered(lines):
-            try:
-                total += int(cnt_column)
-            except ValueError:
-                pass
+        total = sum(int(s) for s in filter_bytes_transfered(lines) if s.isdigit())
         self.assertEqual(total, 18159780)
 
 
