@@ -37,7 +37,7 @@ def yield_logopen(
         elif log.endswith(".bz2"):
             fo = bz2.open(log)
         else:
-            open(log)  # io.BufferedIOBase
+            fo = open(log)
         yield fo
         fo.close()
 
@@ -50,7 +50,10 @@ def yield_lines(
     for gen in logopens:
         # yield from gen
         for line in gen:
-            yield line.decode("utf-8")
+            if isinstance(line, str):
+                yield line
+            else:
+                yield line.decode("utf-8")
 
 
 def filter_lines(
@@ -61,10 +64,28 @@ def filter_lines(
             yield line
 
 
+def filter_bytes_transfered(
+    lines: Generator[str, None, None],
+) -> Generator[str, None, None]:
+    for line in lines:
+        yield line.rsplit(None, 1)[1]
+
+
 if __name__ == "__main__":
     # doctest.testmod()
-    lognames = yield_lognames("access-log*.*", "www")
+    lognames = yield_lognames("access-log", "www")
     openfiles = yield_logopen(lognames)
     lines = yield_lines(openfiles)
-    for line in filter_lines("(?i)python", lines):
-        print(line)
+    for line in filter_lines("UninstantiatedTemplates", lines):
+        print(line, end="")
+    print()
+    # for line in filter_lines("(?i)python", lines):
+    #     print(line)
+    exit(0)
+    total: int = 0
+    for line in filter_bytes_transfered(lines):
+        try:
+            total += int(line)
+        except ValueError:
+            pass
+    print(f"{total = }")
