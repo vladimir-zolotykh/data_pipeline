@@ -7,13 +7,14 @@
 >>>
 """
 from typing import TextIO, cast
-import io
+import unittest
 import os
 import re
 import fnmatch
 from typing import Generator
 import gzip
 import bz2
+import textwrap
 
 # import doctest
 
@@ -72,20 +73,38 @@ def filter_bytes_transfered(
         yield line.rsplit(None, 1)[1]
 
 
+class TestDataPipeline(unittest.TestCase):
+    def test_filter_lines(self):
+        expected = textwrap.dedent(
+            """\
+            75.165.49.150 - - [24/Feb/2008:02:30:06 -0600] "GET /cgi-bin/wiki.pl?UninstantiatedTemplates HTTP/1.1" 200 2091
+            130.79.100.39 - - [25/Feb/2008:02:41:24 -0600] "GET /cgi-bin/wiki.pl?UninstantiatedTemplates HTTP/1.1" 200 2091
+            75.165.49.150 - - [24/Feb/2008:02:30:06 -0600] "GET /cgi-bin/wiki.pl?UninstantiatedTemplates HTTP/1.1" 200 2091
+            130.79.100.39 - - [25/Feb/2008:02:41:24 -0600] "GET /cgi-bin/wiki.pl?UninstantiatedTemplates HTTP/1.1" 200 2091
+            """
+        )
+
+        lognames = yield_lognames("access-log", "www")
+        openfiles = yield_logopen(lognames)
+        lines = yield_lines(openfiles)
+        got = ""
+        for line in filter_lines("UninstantiatedTemplates", lines):
+            got += line
+        self.assertEqual(got, expected)
+
+    def test_bytes_transferred(self):
+        lognames = yield_lognames("access-log*", "www")
+        openfiles = yield_logopen(lognames)
+        lines = yield_lines(openfiles)
+        total: int = 0
+        lines = filter_lines("(?i)python", lines)
+        for cnt_column in filter_bytes_transfered(lines):
+            try:
+                total += int(cnt_column)
+            except ValueError:
+                pass
+        self.assertEqual(total, 18159780)
+
+
 if __name__ == "__main__":
-    # doctest.testmod()
-    lognames = yield_lognames("access-log", "www")
-    openfiles = yield_logopen(lognames)
-    lines = yield_lines(openfiles)
-    for line in filter_lines("UninstantiatedTemplates", lines):
-        print(line, end="")
-    # for line in filter_lines("(?i)python", lines):
-    #     print(line)
-    exit(0)
-    total: int = 0
-    for line in filter_bytes_transfered(lines):
-        try:
-            total += int(line)
-        except ValueError:
-            pass
-    print(f"{total = }")
+    unittest.main()
