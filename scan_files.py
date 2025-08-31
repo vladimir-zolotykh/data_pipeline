@@ -78,7 +78,6 @@ if __name__ == "__main__":
     lines = yield_lines(openfiles)
     for line in filter_lines("UninstantiatedTemplates", lines):
         print(line, end="")
-    print()
     # for line in filter_lines("(?i)python", lines):
     #     print(line)
     exit(0)
