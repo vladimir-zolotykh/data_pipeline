@@ -15,8 +15,7 @@ from typing import Generator
 import gzip
 import bz2
 import textwrap
-
-# import doctest
+import contextlib
 
 
 def yield_lognames(pattern: str, top: str) -> Generator[str, None, None]:
@@ -34,14 +33,14 @@ def yield_logopen(
 
     fo: TextIO
     for log in lognames:
-        if log.endswith(".gz"):
-            fo = cast(TextIO, gzip.open(log, "rt"))
-        elif log.endswith(".bz2"):
-            fo = cast(TextIO, bz2.open(log, "rt"))
-        else:
-            fo = open(log, "rt")
-        yield fo
-        fo.close()
+        with contextlib.ExitStack() as stack:
+            if log.endswith(".gz"):
+                fo = cast(TextIO, gzip.open(log, "rt"))
+            elif log.endswith(".bz2"):
+                fo = cast(TextIO, bz2.open(log, "rt"))
+            else:
+                fo = open(log, "rt")
+            yield stack.enter_context(fo)
 
 
 def yield_lines(
