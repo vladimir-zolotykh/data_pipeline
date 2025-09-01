@@ -35,7 +35,7 @@ nested_list_deepseek = [
 ]
 
 
-def flatten(items):
+def flatten(items, ignore_types=(str, bytes)):
     """
     >>> list(flatten(nested_list_gpt))
     ['apple', 'banana', 1, 2, 'cherry', 3, 4, 'date', 'eggplant', 5, 'fig', 'grape', 'honeydew', 6, 7]
@@ -46,7 +46,7 @@ def flatten(items):
     """
 
     for item in items:
-        if isinstance(item, Iterable) and not type(item) in (str, bytes):
+        if isinstance(item, Iterable) and not isinstance(item, ignore_types):
             yield from flatten(item)
         else:
             yield item
