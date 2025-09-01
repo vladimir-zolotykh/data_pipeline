@@ -1,3 +1,4 @@
 www/
 example.py
 __pycache__/
+.emacs.desktop*
