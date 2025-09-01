@@ -16,6 +16,7 @@ import gzip
 import bz2
 import textwrap
 import contextlib
+import psutil
 
 
 def yield_lognames(pattern: str, top: str) -> Generator[str, None, None]:
@@ -33,13 +34,13 @@ def yield_logopen(
 
     fo: TextIO
     for log in lognames:
+        if log.endswith(".gz"):
+            fo = cast(TextIO, gzip.open(log, "rt"))
+        elif log.endswith(".bz2"):
+            fo = cast(TextIO, bz2.open(log, "rt"))
+        else:
+            fo = open(log, "rt")
         with contextlib.ExitStack() as stack:
-            if log.endswith(".gz"):
-                fo = cast(TextIO, gzip.open(log, "rt"))
-            elif log.endswith(".bz2"):
-                fo = cast(TextIO, bz2.open(log, "rt"))
-            else:
-                fo = open(log, "rt")
             yield stack.enter_context(fo)
 
 
@@ -97,6 +98,11 @@ class TestDataPipeline(unittest.TestCase):
         lines = filter_lines("(?i)python", lines)
         total = sum(int(s) for s in filter_bytes_transfered(lines) if s.isdigit())
         self.assertEqual(total, 18159780)
+
+    def test_openfiles(self):
+        proc = psutil.Process(os.getpid())
+        fds = proc.open_files()
+        self.assertEqual(len(fds), 0)
 
 
 if __name__ == "__main__":
